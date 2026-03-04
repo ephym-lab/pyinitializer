@@ -14,9 +14,7 @@ from models.project_config import ProjectConfig
 FileTree = Dict[str, str]
 
 
-# ---------------------------------------------------------------------------
 # Public entry point
-# ---------------------------------------------------------------------------
 
 def build_project(config: ProjectConfig) -> FileTree:
     """Return a dict of {relative_path: content} for the scaffolded project."""
@@ -28,9 +26,7 @@ def build_project(config: ProjectConfig) -> FileTree:
     return tree
 
 
-# ---------------------------------------------------------------------------
 # Common files (every project type)
-# ---------------------------------------------------------------------------
 
 def _add_common_files(tree: FileTree, config: ProjectConfig) -> None:
     tree[".gitignore"] = _gitignore()
@@ -44,9 +40,7 @@ def _add_common_files(tree: FileTree, config: ProjectConfig) -> None:
         tree["pyproject.toml"] = _pyproject_toml(config)
 
 
-# ---------------------------------------------------------------------------
 # Project-type-specific files
-# ---------------------------------------------------------------------------
 
 def _add_project_type_files(tree: FileTree, config: ProjectConfig) -> None:
     pt = config.project_type
@@ -60,7 +54,7 @@ def _add_project_type_files(tree: FileTree, config: ProjectConfig) -> None:
         _add_datasci_files(tree, config)
 
 
-# ---- web-api ----------------------------------------------------------------
+# web-api
 
 def _add_web_api_files(tree: FileTree, config: ProjectConfig) -> None:
     fw = config.framework or "fastapi"
@@ -168,7 +162,7 @@ def _web_api_test(framework: str, _config: ProjectConfig) -> str:
     """)
 
 
-# ---- cli --------------------------------------------------------------------
+# cli
 
 def _add_cli_files(tree: FileTree, config: ProjectConfig) -> None:
     deps_lower = [d.lower() for d in config.dependencies]
@@ -224,7 +218,7 @@ def _cli_main(use_typer: bool, config: ProjectConfig) -> str:
     """)
 
 
-# ---- library ----------------------------------------------------------------
+# library
 
 def _add_library_files(tree: FileTree, config: ProjectConfig) -> None:
     mn = config.module_name
@@ -252,7 +246,7 @@ def _add_library_files(tree: FileTree, config: ProjectConfig) -> None:
     """)
 
 
-# ---- data-science / ml ------------------------------------------------------
+# data-science / ml
 
 def _add_datasci_files(tree: FileTree, config: ProjectConfig) -> None:
     mn = config.module_name
@@ -298,9 +292,7 @@ def _add_datasci_files(tree: FileTree, config: ProjectConfig) -> None:
         """)
 
 
-# ---------------------------------------------------------------------------
 # Shared file templates
-# ---------------------------------------------------------------------------
 
 def _readme(config: ProjectConfig) -> str:
     setup_cmd = {

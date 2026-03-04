@@ -25,9 +25,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-# ---------------------------------------------------------------------------
+
 # Lifespan — load PyPI index on startup
-# ---------------------------------------------------------------------------
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -40,9 +40,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down Python Initializr backend.")
 
 
-# ---------------------------------------------------------------------------
 # App
-# ---------------------------------------------------------------------------
 
 app = FastAPI(
     title="Python Initializr API",
@@ -69,18 +67,15 @@ app.add_middleware(
     expose_headers=["X-Venv-Excluded", "Content-Disposition"],
 )
 
-# ---------------------------------------------------------------------------
+
 # Routers
-# ---------------------------------------------------------------------------
 
 app.include_router(generate.router)
 app.include_router(preview.router)
 app.include_router(search.router)
 
 
-# ---------------------------------------------------------------------------
 # Root health check
-# ---------------------------------------------------------------------------
 
 @app.get("/", tags=["Health"])
 async def root():

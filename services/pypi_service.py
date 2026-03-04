@@ -16,18 +16,16 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Module-level cache
-# ---------------------------------------------------------------------------
+
 _package_index: List[str] = []
 
 PYPI_SIMPLE_URL = "https://pypi.org/simple/"
 _INDEX_LOADED = False
 
 
-# ---------------------------------------------------------------------------
 # HTML parser
-# ---------------------------------------------------------------------------
+
 class _AnchorParser(HTMLParser):
     """Collects all href values from <a> tags."""
 
@@ -50,9 +48,7 @@ class _AnchorParser(HTMLParser):
             self.packages.append(stripped)
 
 
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
 
 async def load_index() -> None:
     """Fetch and cache the full PyPI simple index. Called at application startup."""

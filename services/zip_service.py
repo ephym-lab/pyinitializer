@@ -48,9 +48,7 @@ def _dir_size(path: Path) -> int:
     return total
 
 
-# ---------------------------------------------------------------------------
 # venv creation helpers
-# ---------------------------------------------------------------------------
 
 def _venv_create_cmd(config: ProjectConfig, project_dir: Path) -> list[str]:
     pm = config.package_manager
@@ -88,9 +86,7 @@ def _install_cmd(config: ProjectConfig, project_dir: Path) -> list[str] | None:
     return [str(pip_bin), "install"] + deps
 
 
-# ---------------------------------------------------------------------------
 # Public API
-# ---------------------------------------------------------------------------
 
 def generate_zip(config: ProjectConfig) -> Tuple[StreamingResponse, bool]:
     """

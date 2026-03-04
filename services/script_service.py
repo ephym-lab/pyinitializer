@@ -37,9 +37,7 @@ def generate_script(config: ProjectConfig) -> str:
         raise ValueError(f"Unsupported package manager: {pm}")
 
 
-# ---------------------------------------------------------------------------
 # Package-manager-specific generators
-# ---------------------------------------------------------------------------
 
 def _pip_script(py: str, deps: list[str]) -> str:
     lines = [
