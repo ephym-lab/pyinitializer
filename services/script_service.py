@@ -27,10 +27,6 @@ def generate_script(config: ProjectConfig) -> str:
         return _pip_script(py, deps)
     elif pm == "uv":
         return _uv_script(py, deps)
-    elif pm == "poetry":
-        return _poetry_script(py, deps)
-    elif pm == "pipenv":
-        return _pipenv_script(py, deps)
     elif pm == "conda":
         return _conda_script(py, name, deps)
     else:
@@ -66,32 +62,6 @@ def _uv_script(py: str, deps: list[str]) -> str:
     lines.append('echo "   source .venv/bin/activate"')
     return "\n".join(lines) + "\n"
 
-
-def _poetry_script(py: str, deps: list[str]) -> str:
-    lines = [
-        _SHEBANG,
-        "# Requires: pip install poetry",
-        f"poetry env use python{py}",
-    ]
-    if deps:
-        lines.append(f"poetry add {_deps_str(deps)}")
-    lines.append("poetry install")
-    lines.append('\necho "✅ Setup complete. Activate your environment with:"')
-    lines.append('echo "   poetry shell"')
-    return "\n".join(lines) + "\n"
-
-
-def _pipenv_script(py: str, deps: list[str]) -> str:
-    lines = [
-        _SHEBANG,
-        "# Requires: pip install pipenv",
-        f"pipenv --python {py}",
-    ]
-    if deps:
-        lines.append(f"pipenv install {_deps_str(deps)}")
-    lines.append('\necho "✅ Setup complete. Activate your environment with:"')
-    lines.append('echo "   pipenv shell"')
-    return "\n".join(lines) + "\n"
 
 
 def _conda_script(py: str, name: str, deps: list[str]) -> str:

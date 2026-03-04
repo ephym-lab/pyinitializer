@@ -12,16 +12,16 @@ class ProjectConfig(BaseModel):
         max_length=80,
         description="Name of the project (used for directories and pyproject.toml)",
     )
-    package_manager: Literal["pip", "poetry", "uv", "pipenv", "conda"] = Field(
+    package_manager: Literal["pip", "uv", "conda"] = Field(
         ..., description="Package manager to use"
     )
     python_version: Literal["3.10", "3.11", "3.12", "3.13"] = Field(
         ..., description="Target Python version"
     )
-    project_type: Literal["library", "cli", "web-api", "data-science", "ml"] = Field(
+    project_type: Literal["library", "cli", "web-api", "ml"] = Field(
         ..., description="Type of project to scaffold"
     )
-    framework: Optional[Literal["fastapi", "flask", "django", "litestar"]] = Field(
+    framework: Optional[Literal["fastapi", "flask", "django"]] = Field(
         default=None,
         description="Web framework (only relevant for project_type='web-api')",
     )

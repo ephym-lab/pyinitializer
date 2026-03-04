@@ -55,19 +55,11 @@ def _venv_create_cmd(config: ProjectConfig, project_dir: Path) -> list[str]:
     py = config.python_version
     venv = str(project_dir / ".venv")
 
-    if pm == "pip":
-        return [f"python{py}", "-m", "venv", venv]
-    elif pm == "uv":
+    if pm == "uv":
         return ["uv", "venv", "--python", py, venv]
-    elif pm == "poetry":
-        # poetry manages its own venv; we create a plain venv as representative
+    else:
+        # pip and conda: use plain python venv
         return [f"python{py}", "-m", "venv", venv]
-    elif pm == "pipenv":
-        return [f"python{py}", "-m", "venv", venv]
-    elif pm == "conda":
-        # fallback: create a plain venv (conda env creation needs conda present)
-        return [f"python{py}", "-m", "venv", venv]
-    return [f"python{py}", "-m", "venv", venv]
 
 
 def _install_cmd(config: ProjectConfig, project_dir: Path) -> list[str] | None:
@@ -79,11 +71,10 @@ def _install_cmd(config: ProjectConfig, project_dir: Path) -> list[str] | None:
     pip_bin = venv / "bin" / "pip"
     deps = config.dependencies
 
-    if pm in ("pip", "poetry", "pipenv", "conda"):
-        return [str(pip_bin), "install"] + deps
-    elif pm == "uv":
+    if pm == "uv":
         return ["uv", "pip", "install", "--python", str(venv / "bin" / "python")] + deps
-    return [str(pip_bin), "install"] + deps
+    else:
+        return [str(pip_bin), "install"] + deps
 
 
 # Public API

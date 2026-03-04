@@ -33,11 +33,11 @@ def _add_common_files(tree: FileTree, config: ProjectConfig) -> None:
     tree[".python-version"] = config.python_version + "\n"
     tree["README.md"] = _readme(config)
 
-    # pyproject.toml or requirements.txt depending on package manager
-    if config.package_manager in ("pip", "conda"):
-        tree["requirements.txt"] = _requirements_txt(config)
-    else:
+    # uv uses pyproject.toml; pip and conda use requirements.txt
+    if config.package_manager == "uv":
         tree["pyproject.toml"] = _pyproject_toml(config)
+    else:
+        tree["requirements.txt"] = _requirements_txt(config)
 
 
 # Project-type-specific files
@@ -50,7 +50,7 @@ def _add_project_type_files(tree: FileTree, config: ProjectConfig) -> None:
         _add_cli_files(tree, config)
     elif pt == "library":
         _add_library_files(tree, config)
-    elif pt in ("data-science", "ml"):
+    elif pt == "ml":
         _add_datasci_files(tree, config)
 
 
@@ -112,24 +112,6 @@ def _web_api_main(framework: str, config: ProjectConfig) -> str:
             # This file is a placeholder.  Django projects are created via
             # django-admin, which generates the full project layout for you.
             print("Run: django-admin startproject {config.module_name} .")
-        """)
-
-    elif framework == "litestar":
-        return dedent(f"""\
-            from litestar import Litestar, get
-
-
-            @get("/")
-            async def index() -> dict:
-                return {{"message": "Welcome to {config.project_name}!"}}
-
-
-            @get("/health")
-            async def health() -> dict:
-                return {{"status": "ok", "project": "{config.project_name}"}}
-
-
-            app = Litestar([index, health])
         """)
 
     return "# main.py\n"
@@ -250,46 +232,29 @@ def _add_library_files(tree: FileTree, config: ProjectConfig) -> None:
 
 def _add_datasci_files(tree: FileTree, config: ProjectConfig) -> None:
     mn = config.module_name
-    is_ml = config.project_type == "ml"
 
-    tree[f"src/{mn}/__init__.py"] = f'"""{ config.project_name } package."""\n'
+    tree[f"src/{mn}/__init__.py"] = f'"""{config.project_name} package."""\n'
     tree["notebooks/.gitkeep"] = ""
     tree["data/.gitkeep"] = ""
 
-    if is_ml:
-        tree["main.py"] = dedent(f"""\
-            \"\"\"
-            {config.project_name} — ML project entry point.
-            \"\"\"
-            # Common ML imports — install via: pip install numpy pandas scikit-learn
-            try:
-                import numpy as np
-                import pandas as pd
-                from sklearn.model_selection import train_test_split
+    tree["main.py"] = dedent(f"""\
+        \"\"\"
+        {config.project_name} — ML / data science entry point.
+        \"\"\"
+        # Common imports — install via your setup script or:
+        #   pip install numpy pandas scikit-learn matplotlib
+        try:
+            import numpy as np
+            import pandas as pd
+            from sklearn.model_selection import train_test_split
+            import matplotlib.pyplot as plt
 
-                print("Libraries loaded successfully!")
-                print(f"NumPy version: {{np.__version__}}")
-                print(f"Pandas version: {{pd.__version__}}")
-            except ImportError as e:
-                print(f"Missing dependency: {{e}}. Run your setup script first.")
-        """)
-    else:
-        tree["main.py"] = dedent(f"""\
-            \"\"\"
-            {config.project_name} — data science entry point.
-            \"\"\"
-            # Common data-science imports — install via: pip install numpy pandas matplotlib
-            try:
-                import numpy as np
-                import pandas as pd
-                import matplotlib.pyplot as plt
-
-                print("Libraries loaded successfully!")
-                print(f"NumPy version: {{np.__version__}}")
-                print(f"Pandas version: {{pd.__version__}}")
-            except ImportError as e:
-                print(f"Missing dependency: {{e}}. Run your setup script first.")
-        """)
+            print("Libraries loaded successfully!")
+            print(f"NumPy  : {{np.__version__}}")
+            print(f"Pandas : {{pd.__version__}}")
+        except ImportError as e:
+            print(f"Missing dependency: {{e}}. Run your setup script first.")
+    """)
 
 
 # Shared file templates
@@ -298,16 +263,12 @@ def _readme(config: ProjectConfig) -> str:
     setup_cmd = {
         "pip": "pip install -r requirements.txt",
         "uv": "uv pip install -r requirements.txt",
-        "poetry": "poetry install",
-        "pipenv": "pipenv install",
         "conda": f"conda env create -f environment.yml && conda activate {config.project_name}",
     }.get(config.package_manager, "pip install -r requirements.txt")
 
     venv_cmd = {
         "pip": f"python{config.python_version} -m venv .venv && source .venv/bin/activate",
         "uv": f"uv venv --python {config.python_version} .venv && source .venv/bin/activate",
-        "poetry": f"poetry env use python{config.python_version}",
-        "pipenv": f"pipenv --python {config.python_version}",
         "conda": f"conda create -n {config.project_name} python={config.python_version} -y && conda activate {config.project_name}",
     }.get(config.package_manager, "python -m venv .venv")
 
@@ -361,6 +322,7 @@ def _requirements_txt(config: ProjectConfig) -> str:
 
 
 def _pyproject_toml(config: ProjectConfig) -> str:
+    """Only called for uv projects."""
     mn = config.module_name
     deps = list(config.dependencies)
     if config.project_type == "web-api" and config.framework:
@@ -370,23 +332,11 @@ def _pyproject_toml(config: ProjectConfig) -> str:
     deps_toml = "\n".join(f'    "{d}",' for d in deps)
     python_requires = f">={config.python_version}"
 
-    build_system = {
-        "poetry": dedent("""\
-            [build-system]
-            requires = ["poetry-core>=1.0.0"]
-            build-backend = "poetry.core.masonry.api"
-        """),
-        "uv": dedent("""\
-            [build-system]
-            requires = ["hatchling"]
-            build-backend = "hatchling.build"
-        """),
-        "pipenv": dedent("""\
-            [build-system]
-            requires = ["setuptools>=68", "wheel"]
-            build-backend = "setuptools.backends.legacy:build"
-        """),
-    }.get(config.package_manager, "")
+    build_system = dedent("""\
+        [build-system]
+        requires = ["hatchling"]
+        build-backend = "hatchling.build"
+    """)
 
     return dedent(f"""\
         [project]
