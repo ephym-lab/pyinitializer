@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Starting Python Initializr backend …")
+    logger.info("Starting Python Initializer backend …")
     # Non-blocking: we fire-and-forget so the server starts immediately.
     # The search endpoint will return empty results until loading is done.
     import asyncio

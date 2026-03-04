@@ -136,6 +136,47 @@ def generate_zip(config: ProjectConfig) -> Tuple[StreamingResponse, bool]:
                 except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
                     logger.warning("dep install error: %s", exc)
 
+        # --- Django-specific project and app creation ---
+        if venv_created and config.framework == "django":
+            python_bin = project_dir / ".venv" / "bin" / "python"
+            module_name = config.module_name
+            
+            # 1. Create Django project
+            try:
+                # We use 'python -m django' to ensure we use the version installed in venv
+                django_admin_cmd = [str(python_bin), "-m", "django", "startproject", module_name, "."]
+                logger.info("Running django-admin: %s", " ".join(django_admin_cmd))
+                result = subprocess.run(
+                    django_admin_cmd,
+                    cwd=str(project_dir),
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
+                if result.returncode != 0:
+                    logger.warning("django-admin startproject failed: %s", result.stderr)
+                else:
+                    logger.info("Django project '%s' created", module_name)
+                    
+                    # 2. Create Django apps
+                    for app_name in config.django_apps:
+                        startapp_cmd = [str(python_bin), "manage.py", "startapp", app_name]
+                        logger.info("Running startapp: %s", " ".join(startapp_cmd))
+                        app_result = subprocess.run(
+                            startapp_cmd,
+                            cwd=str(project_dir),
+                            capture_output=True,
+                            text=True,
+                            timeout=30,
+                        )
+                        if app_result.returncode != 0:
+                            logger.warning("django-admin startapp '%s' failed: %s", app_name, app_result.stderr)
+                        else:
+                            logger.info("Django app '%s' created", app_name)
+                            
+            except (FileNotFoundError, subprocess.TimeoutExpired) as exc:
+                logger.warning("Django command error: %s", exc)
+
         # --- Check venv size ---
         if venv_created and venv_dir.exists():
             venv_size = _dir_size(venv_dir)

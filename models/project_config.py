@@ -29,6 +29,10 @@ class ProjectConfig(BaseModel):
         default_factory=list,
         description="Additional PyPI package names to install",
     )
+    django_apps: List[str] = Field(
+        default_factory=list,
+        description="Django app names to create with manage.py startapp (only for framework='django')",
+    )
 
     @validator("project_name")
     def sanitize_project_name(cls, v: str) -> str:
@@ -49,6 +53,22 @@ class ProjectConfig(BaseModel):
             raise ValueError(
                 "framework may only be set when project_type is 'web-api'"
             )
+        return v
+
+    @validator("django_apps", always=True)
+    def django_apps_only_for_django(
+        cls, v: List[str], values: dict
+    ) -> List[str]:
+        import re
+        if v and values.get("framework") != "django":
+            raise ValueError(
+                "django_apps may only be set when framework is 'django'"
+            )
+        for app in v:
+            if not re.match(r"^[a-z][a-z0-9_]*$", app):
+                raise ValueError(
+                    f"Django app name '{app}' must be lowercase letters, digits, and underscores, starting with a letter"
+                )
         return v
 
     @property
