@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers import generate, preview, search
@@ -35,7 +35,8 @@ async def lifespan(app: FastAPI):
     # Non-blocking: we fire-and-forget so the server starts immediately.
     # The search endpoint will return empty results until loading is done.
     import asyncio
-    asyncio.create_task(pypi_service.load_index())
+    import asyncio
+    asyncio.create_task(pypi_service.PyPIService.load_index())
     yield
     logger.info("Shutting down Python Initializr backend.")
 
@@ -70,9 +71,12 @@ app.add_middleware(
 
 # Routers
 
-app.include_router(generate.router)
-app.include_router(preview.router)
-app.include_router(search.router)
+api_v1_router = APIRouter(prefix="/api/v1")
+api_v1_router.include_router(generate.router)
+api_v1_router.include_router(preview.router)
+api_v1_router.include_router(search.router)
+
+app.include_router(api_v1_router)
 
 
 # Root health check
@@ -83,7 +87,7 @@ async def root():
         "service": "Python Initializr API",
         "version": "0.1.0",
         "docs": "/docs",
-        "pypi_index_loaded": pypi_service.is_loaded(),
+        "pypi_index_loaded": pypi_service.PyPIService.is_loaded(),
     }
 
 

@@ -30,9 +30,9 @@ async def search_packages(
     Note: The index is loaded asynchronously at startup. If it has not yet
     finished loading, an empty list is returned.
     """
-    results = pypi_service.search_packages(q, limit=limit)
+    results = pypi_service.PyPIService.search_packages(q, limit=limit)
     return {
         "query": q,
         "results": results,
-        "index_loaded": pypi_service.is_loaded(),
+        "index_loaded": pypi_service.PyPIService.is_loaded(),
     }

@@ -16,7 +16,7 @@ from services import script_service, zip_service
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/generate", tags=["Generate"])
+router = APIRouter(prefix="/projects", tags=["Projects"])
 
 
 @router.post("/zip", summary="Download project as a ZIP archive")
@@ -30,7 +30,7 @@ async def generate_zip(config: ProjectConfig, response: Response):
     the response header `X-Venv-Excluded: true` is set.
     """
     try:
-        streaming_response, venv_excluded = zip_service.generate_zip(config)
+        streaming_response, venv_excluded = zip_service.ZipService(config).generate()
         if venv_excluded:
             streaming_response.headers["X-Venv-Excluded"] = "true"
         return streaming_response
@@ -51,7 +51,7 @@ async def generate_script(config: ProjectConfig):
     dependencies for the given configuration.
     """
     try:
-        script = script_service.generate_script(config)
+        script = script_service.ScriptService(config).generate()
         filename = f"setup_{config.project_name}.sh"
         return PlainTextResponse(
             content=script,

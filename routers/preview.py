@@ -10,7 +10,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from models.project_config import ProjectConfig
-from services import project_builder
+from services import projectbuilder
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ async def preview_project(config: ProjectConfig):
     - `content` — file content string (omitted for directories)
     """
     try:
-        file_tree = project_builder.build_project(config)
+        file_tree = projectbuilder.ProjectBuilder(config).build()
 
         # Also collect intermediate directories
         all_dirs: set[str] = set()
