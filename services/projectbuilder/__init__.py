@@ -4,7 +4,9 @@ from .common import CommonFilesBuilder
 from .fastapi_builder import FastApiBuilder
 from .flask_builder import FlaskBuilder
 from .django_builder import DjangoBuilder
-from .other_builders import CliBuilder, LibraryBuilder, DataScienceBuilder
+from .cli_builder import CliBuilder
+from .library_builder import LibraryBuilder
+from .datascience_builder import DataScienceBuilder
 from models.project_config import ProjectConfig
 
 class ProjectBuilder:

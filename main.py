@@ -71,12 +71,14 @@ app.add_middleware(
 
 # Routers
 
+# New versioned API for projects
 api_v1_router = APIRouter(prefix="/api/v1")
 api_v1_router.include_router(generate.router)
-api_v1_router.include_router(preview.router)
-api_v1_router.include_router(search.router)
-
 app.include_router(api_v1_router)
+
+# Root-level routes for compatibility with existing frontend
+app.include_router(preview.router)
+app.include_router(search.router)
 
 
 # Root health check
