@@ -10,19 +10,29 @@ CORS:
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
 from routers import generate, preview, search
 from services import pypi_service
 
+# Load environment variables from .env file
+load_dotenv()
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger(__name__)
+
+# CORS origins from environment
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "").split(",")
+# Clean up whitespace if any
+ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS if origin.strip()]
 
 
 
@@ -55,13 +65,10 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# CORS — allow local Next.js frontend and any deployed frontend origin
+# CORS — allow origins from environment
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
