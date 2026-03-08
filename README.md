@@ -37,7 +37,7 @@ All `POST` endpoints accept a `ProjectConfig` JSON body:
 // TypeScript type for your frontend
 type PackageManager = "pip" | "uv" | "conda";
 type PythonVersion  = "3.10" | "3.11" | "3.12" | "3.13";
-type ProjectType    = "library" | "cli" | "web-api" | "ml";
+type ProjectType    = "library" | "cli" | "web-api" | "data-science";
 type Framework      = "fastapi" | "flask" | "django";
 
 interface ProjectConfig {
@@ -296,8 +296,8 @@ const initialConfig: ProjectConfig = {
 
 ## Generated file structure reference
 
-| File | library | cli | web-api | data-science | ml |
-|------|:-------:|:---:|:-------:|:-----------:|:--:|
+| File | library | cli | web-api | data-science |
+|------|:-------:|:---:|:-------:|:-----------:|
 | `.gitignore` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `.python-version` | ✅ | ✅ | ✅ | ✅ | ✅ |
 | `README.md` | ✅ | ✅ | ✅ | ✅ | ✅ |
