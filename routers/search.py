@@ -21,18 +21,10 @@ async def search_packages(
     q: str = Query(..., min_length=1, description="Package name search query"),
     limit: int = Query(20, ge=1, le=100, description="Maximum number of results"),
 ):
-    """
-    Search the cached PyPI Simple Index for packages matching the query.
+    results = await pypi_service.PyPIService.search_packages(q, limit=limit)
 
-    Returns up to `limit` package names sorted by relevance (prefix matches
-    first, then substring matches, then fuzzy matches).
-
-    Note: The index is loaded asynchronously at startup. If it has not yet
-    finished loading, an empty list is returned.
-    """
-    results = pypi_service.PyPIService.search_packages(q, limit=limit)
     return {
         "query": q,
         "results": results,
-        "index_loaded": pypi_service.PyPIService.is_loaded(),
+        "index_loaded": True,
     }
