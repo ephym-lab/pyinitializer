@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from difflib import get_close_matches
 from html.parser import HTMLParser
 from typing import List
 
@@ -9,76 +8,82 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-class PyPIParser(HTMLParser):
-    """Collects all data from tags (vulnerable to huge pages but fine for simple index)."""
 
-    def __init__(self) -> None:
+class SmartParser(HTMLParser):
+    def __init__(self, query: str, limit: int):
         super().__init__()
-        self.packages: List[str] = []
+        self.query = query.lower()
+        self.limit = limit
+        self.prefix_matches: List[str] = []
+        self.substring_matches: List[str] = []
 
-    def handle_data(self, data: str) -> None:
-        stripped = data.strip()
-        if stripped:
-            self.packages.append(stripped)
+    def handle_data(self, data: str):
+        name = data.strip().lower()
+        if not name:
+            return
+
+        total = len(self.prefix_matches) + len(self.substring_matches)
+        if total >= self.limit:
+            return
+
+        if name.startswith(self.query):
+            if name not in self.prefix_matches:
+                self.prefix_matches.append(name)
+
+        elif self.query in name:
+            if name not in self.substring_matches:
+                self.substring_matches.append(name)
+
+    def get_results(self) -> List[str]:
+        return (self.prefix_matches + self.substring_matches)[: self.limit]
+
 
 class PyPIService:
-    """Service for PyPI package index operations."""
-    
     PYPI_SIMPLE_URL = "https://pypi.org/simple/"
-    _package_index: List[str] = []
-    _loaded = False
+    PYPI_PACKAGE_URL = "https://pypi.org/pypi/{}/json"
 
     @classmethod
-    async def load_index(cls) -> None:
-        """Fetch and cache the full PyPI simple index. Called at application startup."""
-        logger.info("Fetching PyPI simple index from %s …", cls.PYPI_SIMPLE_URL)
-        try:
-            async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as client:
-                response = await client.get(cls.PYPI_SIMPLE_URL, headers={"Accept": "text/html"})
-                response.raise_for_status()
-
-            parser = PyPIParser()
-            parser.feed(response.text)
-            cls._package_index = [pkg.lower() for pkg in parser.packages if pkg.strip()]
-            cls._loaded = True
-            logger.info("PyPI index loaded: %d packages cached.", len(cls._package_index))
-        except Exception as exc:
-            logger.warning(
-                "Failed to load PyPI index: %s. Package search will be unavailable.", exc
-            )
-
-    @classmethod
-    def search_packages(cls, query: str, limit: int = 20) -> List[str]:
-        """
-        Search cached package names.
-        Returns up to `limit` package names sorted by relevance.
-        """
-        q = query.lower().strip()
-        if not q:
+    async def search_packages(cls, query: str, limit: int = 20) -> List[str]:
+        if not query.strip():
             return []
 
-        # 1. Prefix matches
-        prefix: List[str] = [p for p in cls._package_index if p.startswith(q)]
+        query = query.lower()
+        results: List[str] = []
 
-        # 2. Substring matches (excluding prefix duplicates)
-        prefix_set = set(prefix)
-        substring: List[str] = [
-            p for p in cls._package_index if q in p and p not in prefix_set
-        ]
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
 
-        results = prefix + substring
+                # ✅ Phase 1: Check exact match
+                try:
+                    r = await client.get(cls.PYPI_PACKAGE_URL.format(query))
+                    if r.status_code == 200:
+                        results.append(query)
+                except Exception:
+                    pass
 
-        # 3. Fuzzy fallback if we have fewer than `limit` hits
-        if len(results) < limit:
-            fuzzy = get_close_matches(q, cls._package_index, n=limit, cutoff=0.6)
-            seen = set(results)
-            for pkg in fuzzy:
-                if pkg not in seen:
-                    results.append(pkg)
-                    seen.add(pkg)
+                # ✅ Phase 2: Streaming search
+                parser = SmartParser(query, limit)
 
-        return results[:limit]
+                async with client.stream("GET", cls.PYPI_SIMPLE_URL) as response:
+                    async for chunk in response.aiter_text():
+                        parser.feed(chunk)
+
+                        if len(parser.prefix_matches) >= limit:
+                            break
+
+                streamed = parser.get_results()
+
+                # Merge while avoiding duplicates
+                for pkg in streamed:
+                    if pkg not in results:
+                        results.append(pkg)
+
+                return results[:limit]
+
+        except Exception as exc:
+            logger.warning("PyPI search failed: %s", exc)
+            return []
 
     @classmethod
     def is_loaded(cls) -> bool:
-        return cls._loaded
+        return True

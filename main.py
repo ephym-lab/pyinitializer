@@ -39,16 +39,16 @@ ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS if origin.strip(
 # Lifespan — load PyPI index on startup
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("Starting Python Initializer backend …")
-    # Non-blocking: we fire-and-forget so the server starts immediately.
-    # The search endpoint will return empty results until loading is done.
-    import asyncio
-    import asyncio
-    asyncio.create_task(pypi_service.PyPIService.load_index())
-    yield
-    logger.info("Shutting down Python Initializr backend.")
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     logger.info("Starting Python Initializer backend …")
+#     # Non-blocking: we fire-and-forget so the server starts immediately.
+#     # The search endpoint will return empty results until loading is done.
+#     import asyncio
+#     import asyncio
+#     asyncio.create_task(pypi_service.PyPIService.load_index())
+#     yield
+#     logger.info("Shutting down Python Initializr backend.")
 
 
 # App
@@ -60,7 +60,7 @@ app = FastAPI(
         "Select your options, download a ZIP or shell-script, and start coding."
     ),
     version="0.1.0",
-    lifespan=lifespan,
+    # lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
 )
@@ -96,7 +96,7 @@ async def root():
         "service": "Python Initializr API",
         "version": "0.1.0",
         "docs": "/docs",
-        "pypi_index_loaded": pypi_service.PyPIService.is_loaded(),
+        "pypi_index_loaded": pypi_service.PyPIService.is_loaded()
     }
 
 
@@ -104,5 +104,5 @@ async def root():
 async def health():
     return {
         "status": "ok",
-        "pypi_index_loaded": pypi_service.is_loaded(),
+        "pypi_index_loaded": pypi_service.PyPIService.is_loaded()
     }

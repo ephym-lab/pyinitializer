@@ -6,3 +6,4 @@ django
 gunicorn
 uvicorn
 python-dotenv
+beautifulsoup4
