@@ -3,7 +3,7 @@ name: Deploy to DigitalOcean Droplet
 on:
   push:
     branches:
-      - deployment
+      - main
 
 jobs:
   deploy:
@@ -23,6 +23,6 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             cd /var/www/pyinitializer
-            git pull origin deployment
+            git pull origin main
             docker compose up -d --build --remove-orphans
             docker image prune -f
