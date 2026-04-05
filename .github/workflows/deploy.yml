@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        # fetch the latest commit from the main branch
+          
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.2.0
